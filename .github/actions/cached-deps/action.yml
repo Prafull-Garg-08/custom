@@ -12,8 +12,8 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Cache dependencies == 'true'
-      if: inputs.caching
+    - name: Cache dependencies 
+      if: inputs.caching == 'true'
       id: cache
       uses: actions/cache@v3
       with:
