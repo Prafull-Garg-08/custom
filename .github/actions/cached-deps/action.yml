@@ -1,28 +1,66 @@
+# name: 'Get & cache dependencies'
+# description: 'Get the dependencies via npm and cache them.'
+# inputs:
+#     caching:
+#       description: 'whether to cache or not'
+#       required: false
+#       default: 'true'
+# outputs:
+#     used-cache:
+#       description: 'whether the cache  was  used.'
+#       value: ${{ steps.install }}
+# runs:
+#   using: 'composite'
+#   steps:
+#     - name: Cache dependencies 
+#       if: inputs.caching == 'true'
+#       id: cache
+#       uses: actions/cache@v3
+#       with:
+#         path: node_modules
+#         key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+#     - name: Install dependencies
+#       if: steps.cache.outputs.cache-hit != 'true' && inputs.caching != 'true'
+#       id: install
+#       run: |
+#         npm ci
+#         echo "::set-output name=cache::'${{inputs.caching}}'"
+#       shell: bash
+
 name: 'Get & cache dependencies'
 description: 'Get the dependencies via npm and cache them.'
+
 inputs:
-    caching:
-      description: 'whether to cache or not'
-      required: false
-      default: 'true'
+  caching:
+    description: 'Whether to cache or not'
+    required: false
+    default: 'true'
+
 outputs:
-    used-cache:
-      description: 'whether the cache  was  used.'
-      value: ${{ steps.install }}
+  used-cache:
+    description: 'Whether the cache was used.'
+    value: ${{ steps.set-output.outputs.cache }}
+
 runs:
   using: 'composite'
   steps:
-    - name: Cache dependencies 
-      if: inputs.caching == 'true'
+    - name: Cache dependencies
       id: cache
+      if: ${{ inputs.caching == 'true' }}
       uses: actions/cache@v3
       with:
         path: node_modules
         key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
+
     - name: Install dependencies
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.caching != 'true'
       id: install
+      if: ${{ steps.cache.outputs.cache-hit != 'true' && inputs.caching == 'true' }}
       run: |
         npm ci
-        echo "::set-output name=cache::'${{inputs.caching}}'"
+        echo "cache=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
       shell: bash
+
+    - name: Set output for cache usage
+      id: set-output
+      run: echo "cache=${{ steps.cache.outputs.cache-hit }}" >> $GITHUB_ENV
+
